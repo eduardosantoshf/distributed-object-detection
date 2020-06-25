@@ -6,6 +6,10 @@ import video2image
 import cv2
 import base64
 import numpy as np
+import threading
+import asyncio
+import functools
+import concurrent.futures
 
 class RoundRobin():
     def __init__(self):
@@ -23,6 +27,11 @@ class RoundRobin():
 
 class Server():
     def __init__(self, host, port, max_persons):
+        self.temp = 0
+        self.objects = {}
+        self.workerNum = 0
+        self.totalTime = 0
+        self.contador = -1
         self.escalonamento = RoundRobin()
         self.global_port = 3456
         self.workers_pool = []
@@ -61,9 +70,15 @@ class Server():
         return "Video delivered."
 
     def iterateFrames(self):
-        for frame in self.video_paths:
-            print("requested")
-            self.requestFrame(frame)
+        for x in self.escalonamento.workers:
+            if(self.contador >= len(self.video_paths)):
+                pass
+            else:
+                self.contador = self.contador + 1
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                future1 = loop.run_in_executor(None, self.requestFrame)
+            #self.requestFrame
         return "OK"
 
     def regist(self):
@@ -77,30 +92,73 @@ class Server():
         return json_text
 
 
-    def requestFrame(self, frame):
+    def requestFrame(self):
+        #print("requested")
         [worker_addr, worker_port] = self.escalonamento.choose()
         worker_link = worker_addr + worker_port
-        self.processing[worker_port] = frame
-        print(worker_link)
-        image_file = cv2.imread(frame)
+        self.processing[worker_port] = self.video_paths[self.contador]
+        #print(worker_link)
+        image_file = cv2.imread(self.video_paths[self.contador])
         image = base64.b64encode(cv2.imencode('.jpg', image_file)[1]).decode()
         imagem2 = base64.b64decode(image)
 
-        json_text = {'image': image, 'teste': "teste de uma string"}
+        json_text = {'image': image}
         requests.post(worker_link + "/requestFrame", json = json_text)
+        
         return "OK"
 
     def imageReceived(self):
+        self.temp += 1
         r = request.json
         info = r["info"]
         time = r["enlapsed"]
-        print(info)
-        print(time)
+        self.totalTime = self.totalTime + time
+        
+        #print(info)
+        #print(self.timeArray[len(self.timeArray-2)])
+        #print(time - self.timeArray[len(self.timeArray)-2])
+        self.workerNum += 1
+
+        self.printAlert(info)
+
+        if(self.workerNum == len(self.escalonamento.workers)):
+            self.iterateFrames()
+            self.workerNum = 0
+        
+        print(self.contador)
+        print(len(self.video_paths))
+        if(self.contador >= len(self.video_paths)):
+            self.endProcessing()
+
         return "OK"
+    
+    def printAlert(self, info):
+            person_counter = 0
+            for obj in info:
+                if(obj in self.objects.keys()):
+                    self.objects[obj] += 1
+                    if(obj == 'person'):
+                        person_counter += 1
+                else:
+                    self.objects[obj] = 1
+            if(person_counter > self.max_persons):
+                print("Frame " + str(self.temp) + ": " + str(person_counter) + " <person> detected")
+                person_counter=0
+            
+
+    
+    def endProcessing(self):
+        print("Processed frames: " + str(self.contador))
+        print("Average processing time per frame: " + str(self.totalTime / (self.contador + 1)))
+        print("Person objects detected: " + str(self.objects['person']))
+        print("Total classes detected: " + str(len(self.objects)))
+
+        sortedArray = sorted(self.objects.items(), key=lambda x: x[1]) 
+        print("Top 3 objects detected: " + sortedArray[len(sortedArray)-1][0] + ", " + sortedArray[len(sortedArray)-2][0] + ", " + sortedArray[len(sortedArray)-3][0])
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--max", help="maximum number of persons in a frame", default=10)
     args = parser.parse_args()
-    Server('localhost', 5000, args.max)
+    Server('localhost', 5000, int(args.max))
