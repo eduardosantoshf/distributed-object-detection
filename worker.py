@@ -43,12 +43,14 @@ class Worker():
         
     
     def requestFrame(self):
+        #print("entrou")
         r = request.json
         imagem = r["image"]
         imagem2 = base64.b64decode(imagem)
         jpg_as_np = np.frombuffer(imagem2, dtype=np.uint8)
         img = cv2.imdecode(jpg_as_np, flags=1)
         
+        exec_time = 0
         self.image_details, exec_time = self.calculate(img)
         self.sendImageInfo(exec_time)
         return "OK"
@@ -60,6 +62,7 @@ class Worker():
 
     def calculate(self, frame):
         time.sleep(5)
+        start = 0
         start = int(round(time.time() * 1000))
         # Image to be processed
         original_image = frame #you can and should replace this line to receive the image directly (not from a file)
@@ -98,7 +101,9 @@ class Worker():
         #image = utils.draw_bbox(original_image, bboxes)
         #image = Image.fromarray(image)
         #image.show()
+        exec_time = 0
         exec_time = int(round(time.time() * 1000)) - start
+        (print(exec_time))
         print(f"Objects Detected: {objects_detected}")
         return objects_detected, exec_time
 
