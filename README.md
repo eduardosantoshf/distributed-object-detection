@@ -56,7 +56,7 @@ $ python3 worker.py
 ```
 
 Finally, **send** the video to the server:
-````
+```
 $ curl -F ‘video=@moliceiro.m4v’ http://localhost:5000
 ```
 
