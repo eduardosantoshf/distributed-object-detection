@@ -1,6 +1,6 @@
 # SecondCDProject
 
-**Distributed application** capable of **detecting** people in recorded video, showing if in the video there is at any time a number of people greater than a pre-configured value.
+**Distributed application** capable of **detecting** people in a recorded video, showing if in the video there is at any time a number of people greater than a pre-configured value.
 
 ## Course
 This project was developed under the [Distributed Computing](https://www.ua.pt/en/uc/12273) course of [University of Aveiro](https://www.ua.pt/).
