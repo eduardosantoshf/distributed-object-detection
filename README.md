@@ -1,4 +1,4 @@
-# SecondCDProject
+# Second CD Project
 
 **Distributed application** capable of **detecting** people in a recorded video, showing if in the video there is at any time a number of people greater than a pre-configured value.
 
@@ -59,6 +59,9 @@ Finally, **send** the video to the server:
 ```
 $ curl -F ‘video=@moliceiro.m4v’ http://localhost:5000
 ```
+
+## Grade 
+This project's grade was **15,5** out of 20.
 
 ## Authors
 * **Eduardo Santos**: [eduardosantoshf](https://github.com/eduardosantoshf)
